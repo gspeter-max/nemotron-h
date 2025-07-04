@@ -15,24 +15,26 @@ It is designed to enable powerful and efficient reward-aligned fine-tuning using
 
 Train your base language model using high-quality human-annotated datasets with cross-entropy loss.
 
-* Hugging Face Transformers compatible
-* Simple plug-and-play with custom datasets
-* Clear modular structure
+* Dataset: [`domenicrosati/TruthfulQA`](https://huggingface.co/datasets/domenicrosati/TruthfulQA)
+* Model checkpoint used: `/content/drive/MyDrive/nemotron-h/checkpoint-818`
+* Tokenizer: GPT-2 with EOS token as pad token
 
 ### ⚖️ Reward Modeling
 
-Define and train your custom reward model.
+Train a reward model using datasets with human preference annotations to distinguish between good and bad responses.
 
-* Architecture-agnostic reward model support
-* Seamless integration with PPO trainer
+* Dataset: [`argilla/dpo-mix-7k`](https://huggingface.co/datasets/argilla/dpo-mix-7k)
+* Reward model: `distilbert-base-uncased` for pairwise scoring
+* Contrastive loss using chosen vs rejected examples
 
 ### 🏆 PPO Trainer
 
-Train your model with reinforcement learning using reward signal from the reward model.
+Fine-tune the language model using reinforcement learning based on feedback from the reward model.
 
-* Built with `trl` PPOTrainer
-* Supports gradient accumulation, KL penalty, etc.
-* Includes logging via Weights & Biases
+* Dataset: [`allura-org/instruct-ppo-mix-20k`](https://huggingface.co/datasets/allura-org/instruct-ppo-mix-20k)
+* Base + reference model: `/content/drive/MyDrive/nemotron-h/checkpoint-1636`
+* Reward model used: Custom checkpoint from `reward_model/checkpoint-1125`
+* Built on `trl` PPOTrainer
 
 ---
 
@@ -41,9 +43,9 @@ Train your model with reinforcement learning using reward signal from the reward
 ```bash
 .
 ├── SFT.py               # Script for supervised fine-tuning
-├── ppo_trainer.py       # PPO training loop using reward model
 ├── reward_model.py      # Reward model architecture and training
-├── wandb.env            # WANDB API keys or config file
+├── ppo_trainer.py       # PPO training loop using reward model
+├── wandb.env            # WANDB API key (not for public sharing)
 ├── .vscode/             # VSCode settings (optional)
 ```
 
@@ -79,26 +81,27 @@ python ppo_trainer.py
 
 ## 🌟 Highlights
 
-* Modular design (easily extendable)
-* Hugging Face and TRL compatible
-* Plug in your own reward model
-* Easy WANDB integration
-* Full pipeline in one repo
+* End-to-end alignment framework (SFT + RM + PPO)
+* Real open-source alignment datasets used
+* Modular and hackable architecture
+* Easy integration with WANDB for live monitoring
+* GPT-style tokenizer and transformer models
 
 ---
 
 ## 🚀 Future Work
 
 * Add `requirements.txt`
-* Add example datasets
-* Add LoRA/QLoRA support
-* Add evaluation metrics
+* Add evaluation scripts
+* LoRA/QLoRA support
+* Add more datasets (e.g., Anthropic HH, OpenAssistant)
+* HuggingFace Spaces UI for inference demo
 
 ---
 
 ## 🚀 Author
 
-**[@gspeter-max](https://github.com/gspeter-max)**
+[**@gspeter-max**](https://github.com/gspeter-max)
 
 This repo is actively evolving. Contributions, ideas, and pull requests are welcome!
 
