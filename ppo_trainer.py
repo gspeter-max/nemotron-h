@@ -1,15 +1,22 @@
-from transformers import AutoModelForCausalLmWithValueHead , AutoTokenizer 
-from trl import PPOConfig , PPOTrainer 
+from transformers import AutoModelForCausalLM, AutoTokenizer 
+from trl import PPOConfig , PPOTrainer, AutoModelForCausalLMWithValueHead 
 from datasets import load_datasets 
 
 tokenizer = AutoTokenizer.from_pretrained( config.model_name ) 
-config = PPOConfig(
-        model_name = './sft_model', 
+config = PPOConfig( 
         learning_rate = 0.001,
+        do_train = True, 
+        per_device_train_batch_size = 3, 
+        per_device_eval_batch_size = 3, 
+        weight_decay = 0.001, 
+        num_train_epochs = 12, 
+        warmup_steps = 30, 
+        logging_dir = './ppo_training_config', 
+        save_strategy = 'epochs', 
+        logging_steps = 10,
         batch_size = 256, 
         mini_batch_size = 1, 
         gradient_accumulation_steps = 1, 
-        log_with = 'wandb'
         ) 
 
 generate_config = {
@@ -20,11 +27,19 @@ generate_config = {
         } 
 
 datasets = load_datasets( 'datset_name ') 
-model = AutoModelForCausalLmWithValueHead.from_pretrained( config.model_name ) 
+model = AutoModelForCausalLM.from_pretrained( '/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
+ref_model = AutoModelForCausalLM.from_pretraind( '/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
+reward_model = AutoModelForCausalLMWithValueHead.from_pretrained('/content/drive/MyDrive/reward_model/checkpoint-1125') 
+ppo_trainer = PPOTrainer(
+        arg = config, 
+        processing_class = tokenizer,
+        model = model, 
+        ref_model = ref_model, 
+        train_dataset= datasets, 
+        reward_model = reward_model
+    ) # it automatically tokenizer that and you able to access this 
 
-ppo_trainer = PPOTrainer( config , model , tokenizer , dataset ) # it automatically tokenizer that and you able to access this 
-
-for epoch in ppo_trainer.epochs:
+for epoch in ppo_trainer.config.num_train_epochs:
     for batch in ppo_trainer.batch:
         query = batch['query_batch']
         response =  ppo_trainer.generate( query, **generate_config )
