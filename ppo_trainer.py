@@ -1,6 +1,6 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer 
+from transformers import AutoModelForSequenceClassification , AutoTokenizer , GenerationConfig
 from trl import PPOConfig , PPOTrainer, AutoModelForCausalLMWithValueHead 
-from datasets import load_datasets 
+from datasets import load_dataset 
 import wandb 
 
 ''' 
@@ -11,7 +11,8 @@ wandb.init(
     )
     ''' 
 
-tokenizer = AutoTokenizer.from_pretrained( config.model_name ) 
+tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased') 
+tokenizer.pad_tokens = tokenizer.eos_token
 config = PPOConfig( 
         learning_rate = 0.001,
         do_train = True, 
@@ -21,41 +22,56 @@ config = PPOConfig(
         num_train_epochs = 12, 
         warmup_steps = 30, 
         logging_dir = './ppo_training_config', 
-        save_strategy = 'epochs', 
+        save_strategy = 'epoch', 
         logging_steps = 10,
         batch_size = 256, 
         mini_batch_size = 1, 
         gradient_accumulation_steps = 1, 
         ) 
 
-generate_config = {
-        'max_new_token' : 30, 
-        'top_p' : 1, 
-        'top_k': 0,
-        'pad_token_ids' : tokenizer.eos_token_id
-        } 
+generation_config = GenerationConfig.from_pretrained(
+  pretrained_model_name = '/content/drive/MyDrive/nemotron-h/checkpoint-1636',
+    max_new_tokens=100,
+    min_length=2,
+    top_k=0.0,
+    top_p=1.0,
+    do_sample=True,
+    pad_token_id=50256,  # Often set to the EOS token ID
+    eos_token_id=50256
 
-datasets = load_datasets('allura-org/instruct-ppo-mix-20k') 
-model = AutoModelForCausalLM.from_pretrained( '/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
-ref_model = AutoModelForCausalLM.from_pretraind( '/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
-reward_model = AutoModelForCausalLMWithValueHead.from_pretrained('/content/drive/MyDrive/reward_model/checkpoint-1125') 
+)
+
+
+datasets = load_dataset('allura-org/instruct-ppo-mix-20k') 
+model = AutoModelForCausalLMWithValueHead.from_pretrained('/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
+ref_model = AutoModelForCausalLMWithValueHead.from_pretrained('/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
+reward_model = AutoModelForSequenceClassification.from_pretrained('/content/drive/MyDrive/reward_model/checkpoint-1125') 
+model.generation_config = generation_config
+print('---------------------------------------------dgfgdf----------------------------------')
 ppo_trainer = PPOTrainer(
-        arg = config, 
+        args = config, 
         processing_class = tokenizer,
         model = model, 
         ref_model = ref_model, 
         train_dataset= datasets, 
-        reward_model = reward_model
-    ) # it automatically tokenizer that and you able to access this 
+        reward_model = reward_model, 
+        value_model = reward_model
 
-for epoch in ppo_trainer.config.num_train_epochs:
-    for batch in ppo_trainer.batch:
+    ) # it automatically tokenizer that and you able to access this 
+print('--------------------------------------------------------------sdgfs-----------------')
+print(vars(ppo_trainer))
+for epoch in range(ppo_trainer.args.num_train_epochs):
+    for batch in ppo_trainer.dataloader:
         query = batch['query_batch']
-        response =  ppo_trainer.generate( query, **generate_config )
+        # print('------------------------------------------------------------------------')
+        response =  ppo_trainer.generate(query)
+        
         batch['response'] = tokenizer.decode_batch( response ) 
+
         
         query_response = [ q + a for q , a  in zip( batch['query_batch'] , batch['response'] ) ] 
         reward_score = reeward_model( query_respone ) 
         stats = ppo_trainer.step( reward_score , query . response ) 
         ppo_trainer.log_stats( batch, reward_score , stats ) 
+
 
