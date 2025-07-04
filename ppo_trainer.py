@@ -1,10 +1,15 @@
-
-
-
-
 from transformers import AutoModelForCausalLM, AutoTokenizer 
 from trl import PPOConfig , PPOTrainer, AutoModelForCausalLMWithValueHead 
 from datasets import load_datasets 
+import wandb 
+
+''' 
+wandb.init(
+    project = "huggingface", 
+    id = "" , 
+    resume = 'must'
+    )
+    ''' 
 
 tokenizer = AutoTokenizer.from_pretrained( config.model_name ) 
 config = PPOConfig( 
@@ -30,7 +35,7 @@ generate_config = {
         'pad_token_ids' : tokenizer.eos_token_id
         } 
 
-datasets = load_datasets( 'datset_name ') 
+datasets = load_datasets('allura-org/instruct-ppo-mix-20k') 
 model = AutoModelForCausalLM.from_pretrained( '/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
 ref_model = AutoModelForCausalLM.from_pretraind( '/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
 reward_model = AutoModelForCausalLMWithValueHead.from_pretrained('/content/drive/MyDrive/reward_model/checkpoint-1125') 

@@ -10,14 +10,20 @@ from transformers import AutoModelForSequenceClassification , AutoTokenizer , Tr
 from datasets import load_dataset
 from dataclasses import dataclass
 from typing import Optional
-
+import wandb
 import torch.nn.functional as F
 
 # Load a dataset of human preferences
+
+# wandb.init(
+#   project = 'huggingface', 
+#   id = 'gb7udor8', 
+#   resume = 'must'
+# )
 dataset = load_dataset("argilla/dpo-mix-7k")
 reward_model_name = "distilbert-base-uncased"
 
-tokenizer = AutoTokenizer.from_pretrained ( reward_model_name )
+tokenizer = AutoTokenizer.from_pretrained (reward_model_name)
 reward_mdoel = AutoModelForSequenceClassification.from_pretrained ( reward_model_name )
 print(dataset)
 def tokenizer_func( example ):
@@ -100,15 +106,19 @@ class RewardDataCollatorWithPadding:
             }
 
 arg = TrainingArguments(
-        output_dir = './output',
+        output_dir = '/content/drive/MyDrive/reward_model',
         num_train_epochs= 1,
-        per_device_train_batch_size = 60 ,
-        per_device_eval_batch_size = 60,
-        warmup_steps = 129,
+        save_strategy = 'epoch',
+        per_device_train_batch_size = 6 ,
+        per_device_eval_batch_size = 6,
+        warmup_steps = 4,
         weight_decay = 0.002,
+        logging_steps = 10, 
+        save_total_limit = 1,
+        report_to = 'wandb',
+        logging_dir = './reward__output',
         remove_unused_columns=False
     )
-print(tokenized_dataset['train'])
 trainer = RewardTrainer(
         model = reward_mdoel,
         train_dataset = tokenized_dataset['train'],
@@ -116,4 +126,4 @@ trainer = RewardTrainer(
         args = arg
         )
 
-trainer.train()
+trainer.train() # set resume_from_checkpoint = True 
