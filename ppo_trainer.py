@@ -1,3 +1,4 @@
+
 from transformers import AutoModelForSequenceClassification , AutoTokenizer , GenerationConfig , AutoModelForCausalLM
 from trl import PPOConfig , PPOTrainer, AutoModelForCausalLMWithValueHead 
 import trl 
@@ -12,7 +13,7 @@ wandb.init(
     )
     ''' 
 
-tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased') 
+tokenizer = AutoTokenizer.from_pretrained('gpt2') 
 tokenizer.pad_token = tokenizer.eos_token
 config = PPOConfig( 
         learning_rate = 0.001,
@@ -49,11 +50,17 @@ def batch_tokenization(example):
     data = tokenizer(example['prompt'], truncation= True , padding = 'max_length')
     return data 
 
-datasets = datasets['descriptiveness'].map(batch_tokenization, batched = True , remove_columns = datasets['descriptiveness'].column_names)
+datasets = datasets['descriptiveness'].map(
+    batch_tokenization, 
+    batched = True , 
+    remove_columns = datasets['descriptiveness'].column_names
+    )
 
-model = AutoModelForCausalLMWithValueHead.from_pretrained('/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
+model = AutoModelForCausalLMWithValueHead.from_pretrained('gpt2')
 ref_model = AutoModelForCausalLM.from_pretrained('/content/drive/MyDrive/nemotron-h/checkpoint-1636' )
-reward_model = AutoModelForSequenceClassification.from_pretrained('/content/drive/MyDrive/reward_model/checkpoint-1125') 
+print(ref_model.__class__.__name__)
+reward_model = AutoModelForSequenceClassification.from_pretrained('gpt2') 
+print(reward_model.__class__.__name__)
 model.generation_config = generation_config
 
 ppo_trainer = PPOTrainer(
@@ -79,3 +86,4 @@ ppo_trainer = PPOTrainer(
 #         ppo_trainer.log_stats( batch, reward_score , stats ) 
 
 ppo_trainer.train()
+
