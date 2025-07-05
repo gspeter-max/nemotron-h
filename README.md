@@ -76,32 +76,6 @@ python reward_model.py
 ```bash
 python ppo_trainer.py
 ```
-
----
-
-## 🌟 Highlights
-
-* End-to-end alignment framework (SFT + RM + PPO)
-* Real open-source alignment datasets used
-* Modular and hackable architecture
-* Easy integration with WANDB for live monitoring
-* GPT-style tokenizer and transformer models
-
----
-
-## 🚀 Future Work
-
-* Add `requirements.txt`
-* Add evaluation scripts
-* LoRA/QLoRA support
-* Add more datasets (e.g., Anthropic HH, OpenAssistant)
-* HuggingFace Spaces UI for inference demo
-
----
-
 ## 🚀 Author
-
 [**@gspeter-max**](https://github.com/gspeter-max)
-
-This repo is actively evolving. Contributions, ideas, and pull requests are welcome!
 
